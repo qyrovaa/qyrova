@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background-color: #0F0F10;
+}
+
+/* Remove Chrome Autofill White Background */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
+  -webkit-text-fill-color: white !important;
+  caret-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================= */
+/* LEVEL INTRO POP ANIMATION */
+/* ============================= */
+
+@keyframes popSequence {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.18); /* POP OUT */
+  }
+
+  60% {
+    transform: scale(1.05); /* settle */
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.8); /* GO INSIDE */
+  }
+}
+
+.animate-popSequence {
+  animation: popSequence 1.9s ease-in-out forwards;
+}
+
+/* ============================= */
+/* PREMIUM POINTER CURSOR */
+/* ============================= */
+
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  cursor: pointer;
+}
