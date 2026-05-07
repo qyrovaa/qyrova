@@ -7,19 +7,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email required" });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-
     const client = await clientPromise;
     const db = client.db("qyrova");
     const collection = db.collection("otp_codes");
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email required",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
     await collection.updateOne(
       { email: normalizedEmail },
@@ -51,10 +55,13 @@ export default async function handler(req, res) {
       `,
     });
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({
+      success: true,
+    });
 
   } catch (error) {
     console.error("SEND OTP ERROR:", error);
+
     return res.status(500).json({
       success: false,
       message: error.message,
