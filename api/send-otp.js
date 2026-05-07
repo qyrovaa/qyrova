@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import clientPromise from "../db"; // adjust path if needed
+import clientPromise from "./db";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -7,10 +7,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db("qyrova");
-    const collection = db.collection("otp_codes");
-
     const { email } = req.body;
 
     if (!email) {
@@ -18,6 +14,10 @@ export default async function handler(req, res) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    const client = await clientPromise;
+    const db = client.db("qyrova");
+    const collection = db.collection("otp_codes");
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -32,18 +32,16 @@ export default async function handler(req, res) {
       { upsert: true }
     );
 
-    console.log("OTP STORED:", normalizedEmail, otp);
-
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-  user: process.env.EMAIL_USER,
-  pass: process.env.EMAIL_PASS,
-},
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
     });
 
     await transporter.sendMail({
-      from: "Qyrova <qyrovaa@gmail.com>",
+      from: `Qyrova <${process.env.EMAIL_USER}>`,
       to: normalizedEmail,
       subject: "Your Qyrova OTP Code",
       html: `
@@ -56,7 +54,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
 
   } catch (error) {
-    console.error("OTP ERROR:", error);
-    return res.status(500).json({ message: "Failed to send OTP" });
+    console.error("SEND OTP ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 }
