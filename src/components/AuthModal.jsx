@@ -37,7 +37,7 @@ export default function AuthModal({ type, onClose }) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/send-otp", {
+      const res = await fetch("/api/send-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +75,7 @@ export default function AuthModal({ type, onClose }) {
     setVerifying(true);
 
     try {
-      const res = await fetch("http://localhost:5000/verify-otp", {
+      const res = await fetch("/api/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -241,7 +241,6 @@ export default function AuthModal({ type, onClose }) {
                 ))}
               </div>
 
-              {/* ✅ ERROR BELOW OTP */}
               {error && (
                 <p className="text-red-400 text-sm mb-3 text-center">
                   ⚠️ {error}
