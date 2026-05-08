@@ -9,23 +9,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db("qyrova");
-    const collection = db.collection("otp_codes");
-
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
+        success: false,
         message: "Email required",
       });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    const client = await clientPromise;
+    const db = client.db("qyrova");
+    const collection = db.collection("otp_codes");
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     await collection.updateOne(
       { email: normalizedEmail },
@@ -38,23 +37,20 @@ export default async function handler(req, res) {
       { upsert: true }
     );
 
-    await resend.emails.send({
-      from: "Qyrova <onboarding@resend.dev>",
-      to: normalizedEmail,
-      subject: "Your Qyrova OTP Code",
-      html: `
-        <h2>Your OTP Code</h2>
-        <h1>${otp}</h1>
-        <p>This code expires in 5 minutes.</p>
-      `,
+    const result = await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "qyrovaa@gmail.com",
+      subject: "Qyrova OTP Test",
+      html: `<h1>${otp}</h1>`,
     });
 
     return res.status(200).json({
       success: true,
+      result,
     });
 
   } catch (error) {
-    console.error("SEND OTP ERROR:", error);
+    console.error(error);
 
     return res.status(500).json({
       success: false,
