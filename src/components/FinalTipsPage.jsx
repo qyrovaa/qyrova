@@ -48,7 +48,7 @@ export default function FinalTipsPage({ answers }) {
 
       try {
 
-        const res = await fetch("http://localhost:5000/generate-tips", {
+        const res = await fetch("/api/generate-tips", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

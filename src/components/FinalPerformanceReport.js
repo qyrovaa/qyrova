@@ -54,7 +54,7 @@ export default function FinalPerformanceReport({ answers, user, onGetTips }) {
             try {
 
               const res = await fetch(
-                "http://localhost:5000/evaluate-answer",
+                "/api/evaluate-answer",
                 {
                   method: "POST",
                   headers: {
@@ -93,7 +93,7 @@ export default function FinalPerformanceReport({ answers, user, onGetTips }) {
         );
 
         const summaryRes = await fetch(
-          "http://localhost:5000/generate-final-remark",
+          "/api/generate-final-remark",
           {
             method: "POST",
             headers: {
