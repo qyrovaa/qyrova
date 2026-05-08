@@ -1,13 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-export default function FinalTipsPage({ answers }) {
+export default function FinalTipsPage({ answers, onDone }) {
   const [tips, setTips] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const navigate = useNavigate();
 
   /* ✅ PREMIUM COACHING LOADER */
   const analysisMessages = [
@@ -25,7 +22,6 @@ export default function FinalTipsPage({ answers }) {
 
   /* ✅ LOADER ANIMATION */
   useEffect(() => {
-
     if (!loading) return;
 
     const introTimer = setTimeout(() => {
@@ -42,15 +38,11 @@ export default function FinalTipsPage({ answers }) {
       clearTimeout(introTimer);
       clearInterval(interval);
     };
-
   }, [loading]);
 
   useEffect(() => {
-
     const generateTips = async () => {
-
       try {
-
         const res = await fetch("/api/generate-tips", {
           method: "POST",
           headers: {
@@ -64,7 +56,6 @@ export default function FinalTipsPage({ answers }) {
         const data = await res.json();
 
         setTips({
-
           strengths:
             Array.isArray(data.strengths) &&
             data.strengths.filter(
@@ -113,13 +104,10 @@ export default function FinalTipsPage({ answers }) {
                   "No personalized resources could be recommended from the current interview data."
                 ]
         });
-
       } catch (err) {
-
         console.error(err);
 
         setTips({
-
           strengths: [
             "No meaningful strengths were identified from this interview performance."
           ],
@@ -135,21 +123,16 @@ export default function FinalTipsPage({ answers }) {
           resources: [
             "No personalized resources could be recommended from the current interview data."
           ]
-
         });
-
       } finally {
-
         setLoading(false);
       }
     };
 
     generateTips();
-
   }, [answers]);
 
   const downloadPlan = async () => {
-
     const element = pageRef.current;
 
     /* ✅ HIDE BUTTON SECTION IN PDF */
@@ -179,7 +162,6 @@ export default function FinalTipsPage({ answers }) {
     pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
 
     try {
-
       const logo = new Image();
 
       logo.src = "/mylogo.png";
@@ -190,9 +172,7 @@ export default function FinalTipsPage({ answers }) {
       });
 
       const desiredWidth = 220;
-
       const aspectRatio = logo.height / logo.width;
-
       const calculatedHeight = desiredWidth * aspectRatio;
 
       const x = 40;
@@ -206,9 +186,7 @@ export default function FinalTipsPage({ answers }) {
         desiredWidth,
         calculatedHeight
       );
-
     } catch (err) {
-
       console.log("Logo not loaded, skipping...");
     }
 
@@ -219,7 +197,6 @@ export default function FinalTipsPage({ answers }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative text-white">
-
         <div className="absolute w-[700px] h-[700px] bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
 
         <div
@@ -232,7 +209,6 @@ export default function FinalTipsPage({ answers }) {
         />
 
         <div className="relative z-10 text-center px-6 max-w-2xl">
-
           <p className="text-purple-400 tracking-[0.5em] text-xs md:text-sm mb-8 animate-pulse">
             QYROVA: BE THE OBVIOUS CHOICE
           </p>
@@ -254,7 +230,6 @@ export default function FinalTipsPage({ answers }) {
               </p>
             </div>
           )}
-
         </div>
       </div>
     );
@@ -268,7 +243,6 @@ export default function FinalTipsPage({ answers }) {
         fontFamily: "Rajdhani, sans-serif",
       }}
     >
-
       <img
         src="/performancereportpages.png"
         alt="bg"
@@ -276,15 +250,12 @@ export default function FinalTipsPage({ answers }) {
       />
 
       <div className="relative z-10 w-full flex justify-center">
-
         <div className="w-full max-w-5xl bg-black/70 backdrop-blur-xl p-10 rounded-3xl border border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
-
           <h1 className="text-3xl font-bold text-center mb-10">
             🧠 Your Personalized Improvement Plan
           </h1>
 
           <div className="grid md:grid-cols-2 gap-8">
-
             <div className="p-5 rounded-xl border border-green-500/30 bg-black/40">
               <h2 className="text-green-400 text-xl mb-3">
                 💪 Strengths
@@ -332,11 +303,9 @@ export default function FinalTipsPage({ answers }) {
                 ))}
               </ul>
             </div>
-
           </div>
 
           <div className="download-buttons flex flex-col items-center gap-5 mt-10">
-
             <button
               onClick={downloadPlan}
               className="px-6 py-3 border border-purple-500 rounded-lg 
@@ -346,15 +315,13 @@ export default function FinalTipsPage({ answers }) {
             </button>
 
             <button
-              onClick={() => navigate("/")}
+              onClick={onDone}
               className="px-6 py-3 border border-pink-500 rounded-lg 
               hover:shadow-[0_0_20px_rgba(236,72,153,0.8)] transition-all"
             >
               🏠 Back to Home
             </button>
-
           </div>
-
         </div>
       </div>
     </div>
