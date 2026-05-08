@@ -105,7 +105,7 @@ export default function ProfileMenu({ onLogout, onEdit }) {
 
       <div
         onClick={() => setOpen(!open)}
-        className="w-12 h-12 rounded-full cursor-pointer border border-white/70 hover:scale-105 transition overflow-hidden"
+        className="w-16 h-16 rounded-full cursor-pointer border border-white/70 hover:scale-105 transition overflow-hidden shadow-[0_0_18px_rgba(255,255,255,0.12)]"
       >
         {avatar ? (
           <img src={avatar} className="w-full h-full object-cover" />
@@ -131,11 +131,14 @@ export default function ProfileMenu({ onLogout, onEdit }) {
 
           <div className="flex items-center gap-3 mb-4">
             <div
-              className="relative w-12 h-12 rounded-full cursor-pointer"
+              className="relative w-14 h-14 rounded-full cursor-pointer"
               onClick={() => fileInputRef.current.click()}
             >
               {avatar ? (
-                <img src={avatar} className="w-full h-full object-cover rounded-full border border-white/70" />
+                <img
+                  src={avatar}
+                  className="w-full h-full object-cover rounded-full border border-white/70"
+                />
               ) : (
                 <div className="w-full h-full rounded-full bg-white text-black flex items-center justify-center font-semibold text-sm border border-white/70">
                   {name.charAt(0).toUpperCase()}
