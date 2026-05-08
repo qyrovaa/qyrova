@@ -1,359 +1,396 @@
-import React, { useEffect, useState, useRef } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-export default function FinalTipsPage({ answers, onDone }) {
-  const [tips, setTips] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
+import { auth } from "./firebase";
 
-  /* ✅ PREMIUM COACHING LOADER */
-  const analysisMessages = [
-    "Identifying your strongest interview patterns...",
-    "Finding areas limiting your performance...",
-    "Building personalized answer strategies...",
-    "Designing your improvement roadmap...",
-    "Preparing high-impact interview guidance...",
-  ];
+import { loginUser, isSetupComplete } from "./user";
 
-  const [currentMessage, setCurrentMessage] = useState(0);
-  const [showMessages, setShowMessages] = useState(false);
+import StartPage from "./components/StartPage";
+import OnboardingPage from "./components/OnboardingPage";
+import DegreeSelection from "./components/DegreeSelection";
+import BranchSelection from "./components/BranchSelection";
+import RoleSelection from "./components/RoleSelection";
+import LevelPage from "./components/LevelPage";
+import InterviewPage from "./components/InterviewPage";
+import PerformanceReport from "./components/PerformanceReport";
+import FinalInterview from "./components/FinalInterview";
+import FinalIntro from "./components/FinalIntro";
+import FinalPerformanceReport from "./components/FinalPerformanceReport";
+import FinalTipsPage from "./components/FinalTipsPage";
+import BackButton from "./components/BackButton";
 
-  const pageRef = useRef(null);
+import ProfileMenu from "./components/ProfileMenu";
+import AuthModal from "./components/AuthModal";
 
-  /* ✅ LOADER ANIMATION */
+import ReportExport from "./components/ReportExport";
+
+export default function App() {
+  const [stage, setStage] = useState("start");
+  const [direction, setDirection] = useState(1);
+
+  const [degree, setDegree] = useState("");
+  const [branch, setBranch] = useState("");
+  const [role, setRole] = useState("");
+  const [level, setLevel] = useState("");
+
+  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [coachRemark, setCoachRemark] = useState("");
+
+  const [showAuth, setShowAuth] = useState(false);
+
   useEffect(() => {
+    const handler = (e) => {
+      setDirection(1);
+      setStage(e.detail);
+    };
 
-    if (!loading) return;
-
-    const introTimer = setTimeout(() => {
-      setShowMessages(true);
-    }, 1500);
-
-    const interval = setInterval(() => {
-      setCurrentMessage((prev) =>
-        prev === analysisMessages.length - 1 ? 0 : prev + 1
-      );
-    }, 1200);
+    window.addEventListener("qyrova:navigate", handler);
 
     return () => {
-      clearTimeout(introTimer);
-      clearInterval(interval);
+      window.removeEventListener("qyrova:navigate", handler);
     };
-
-  }, [loading]);
+  }, []);
 
   useEffect(() => {
+    const path = window.location.pathname;
 
-    const generateTips = async () => {
+    if (path.startsWith("/qreport/")) {
+      setStage("reportExport");
+    }
 
-      try {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = localStorage.getItem("emailForSignIn");
 
-        const res = await fetch("/api/generate-tips", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            questions: answers,
-          }),
-        });
-
-        const data = await res.json();
-
-        setTips({
-
-          strengths:
-            Array.isArray(data.strengths) &&
-            data.strengths.filter(
-              (item) => item && item.trim() !== ""
-            ).length > 0
-              ? data.strengths.filter(
-                  (item) => item && item.trim() !== ""
-                )
-              : [
-                  "No meaningful strengths were identified from this interview performance."
-                ],
-
-          weaknesses:
-            Array.isArray(data.weaknesses) &&
-            data.weaknesses.filter(
-              (item) => item && item.trim() !== ""
-            ).length > 0
-              ? data.weaknesses.filter(
-                  (item) => item && item.trim() !== ""
-                )
-              : [
-                  "No detailed weaknesses could be analyzed due to insufficient interview engagement."
-                ],
-
-          improvements:
-            Array.isArray(data.improvements) &&
-            data.improvements.filter(
-              (item) => item && item.trim() !== ""
-            ).length > 0
-              ? data.improvements.filter(
-                  (item) => item && item.trim() !== ""
-                )
-              : [
-                  "More interview participation is required before personalized improvement guidance can be generated."
-                ],
-
-          resources:
-            Array.isArray(data.resources) &&
-            data.resources.filter(
-              (item) => item && item.trim() !== ""
-            ).length > 0
-              ? data.resources.filter(
-                  (item) => item && item.trim() !== ""
-                )
-              : [
-                  "No personalized resources could be recommended from the current interview data."
-                ]
-        });
-
-      } catch (err) {
-
-        console.error(err);
-
-        setTips({
-
-          strengths: [
-            "No meaningful strengths were identified from this interview performance."
-          ],
-
-          weaknesses: [
-            "No detailed weaknesses could be analyzed due to insufficient interview engagement."
-          ],
-
-          improvements: [
-            "More interview participation is required before personalized improvement guidance can be generated."
-          ],
-
-          resources: [
-            "No personalized resources could be recommended from the current interview data."
-          ]
-
-        });
-
-      } finally {
-
-        setLoading(false);
+      if (!email) {
+        email = window.prompt("Enter your email");
       }
-    };
 
-    generateTips();
+      signInWithEmailLink(auth, email, window.location.href)
+        .then(async () => {
+          localStorage.removeItem("emailForSignIn");
+          localStorage.setItem("isLoggedIn", "true");
 
-  }, [answers]);
+          const user = await loginUser(email);
+          localStorage.setItem("qyrovaUser", JSON.stringify(user));
 
-  const downloadPlan = async () => {
-
-    const element = pageRef.current;
-
-    /* ✅ HIDE BUTTON SECTION IN PDF */
-    const buttonsContainer = element.querySelector(".download-buttons");
-
-    if (buttonsContainer) {
-      buttonsContainer.style.display = "none";
+          if (isSetupComplete(user)) {
+            window.dispatchEvent(
+              new CustomEvent("qyrova:navigate", { detail: "level" })
+            );
+          } else {
+            window.dispatchEvent(
+              new CustomEvent("qyrova:navigate", { detail: "degree" })
+            );
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     }
+  }, []);
 
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-    });
+  const goBack = () => {
+    setDirection(-1);
 
-    if (buttonsContainer) {
-      buttonsContainer.style.display = "flex";
+    switch (stage) {
+      case "onboarding":
+        setStage("role");
+        break;
+      case "degree":
+        setStage("start");
+        break;
+      case "branch":
+        setStage("degree");
+        break;
+      case "role":
+        setStage("branch");
+        break;
+      case "level":
+        setStage("onboarding");
+        break;
+      case "interview":
+        setStage("level");
+        break;
+      case "report":
+        setStage("interview");
+        break;
+      case "finalIntro":
+        setStage("report");
+        break;
+      case "final":
+        setStage("finalIntro");
+        break;
+      case "finalReport":
+        setStage("final");
+        break;
+      case "finalTips":
+        setStage("finalReport");
+        break;
+      default:
+        break;
     }
-
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF({
-      orientation: canvas.width > canvas.height ? "landscape" : "portrait",
-      unit: "px",
-      format: [canvas.width, canvas.height],
-    });
-
-    pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height);
-
-    try {
-
-      const logo = new Image();
-
-      logo.src = "/mylogo.png";
-
-      await new Promise((resolve, reject) => {
-        logo.onload = resolve;
-        logo.onerror = reject;
-      });
-
-      const desiredWidth = 220;
-
-      const aspectRatio = logo.height / logo.width;
-
-      const calculatedHeight = desiredWidth * aspectRatio;
-
-      const x = 40;
-      const y = 40;
-
-      pdf.addImage(
-        logo,
-        "PNG",
-        x,
-        y,
-        desiredWidth,
-        calculatedHeight
-      );
-
-    } catch (err) {
-
-      console.log("Logo not loaded, skipping...");
-    }
-
-    pdf.save("Improvement_Plan.pdf");
   };
 
-  /* ✅ PREMIUM CINEMATIC LOADER */
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative text-white">
+  let content = null;
 
-        <div className="absolute w-[700px] h-[700px] bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
+  switch (stage) {
+    case "start":
+      content = (
+        <StartPage
+          onNext={(nextStage) => {
+            setDirection(1);
+            setStage(nextStage);
           }}
         />
+      );
+      break;
 
-        <div className="relative z-10 text-center px-6 max-w-2xl">
+    case "onboarding":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <OnboardingPage
+            onNext={() => {
+              setDirection(1);
+              setStage("level");
+            }}
+          />
+        </>
+      );
+      break;
 
-          <p className="text-purple-400 tracking-[0.5em] text-xs md:text-sm mb-8 animate-pulse">
-            QYROVA: BE THE OBVIOUS CHOICE
-          </p>
+    case "degree":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <DegreeSelection
+            onSelect={(d) => {
+              setDegree(d);
+              const user = JSON.parse(localStorage.getItem("qyrovaUser")) || {};
+              user.degree = d;
+              localStorage.setItem("qyrovaUser", JSON.stringify(user));
+              setDirection(1);
+              setStage("branch");
+            }}
+          />
+        </>
+      );
+      break;
 
-          <h1 className="text-4xl md:text-5xl font-semibold leading-tight mb-8">
-            Preparing Your Personalized Interview Roadmap
-          </h1>
+    case "branch":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <BranchSelection
+            degree={degree}
+            onSelect={(b) => {
+              setBranch(b);
+              const user = JSON.parse(localStorage.getItem("qyrovaUser")) || {};
+              user.branch = b;
+              localStorage.setItem("qyrovaUser", JSON.stringify(user));
+              setDirection(1);
+              setStage("role");
+            }}
+          />
+        </>
+      );
+      break;
 
-          <div className="flex justify-center gap-3 mb-10">
-            <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce"></div>
-            <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce delay-150"></div>
-            <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce delay-300"></div>
-          </div>
+    case "role":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <RoleSelection
+            degree={degree}
+            branch={branch}
+            onSelect={(r) => {
+              const roleLower = r.toLowerCase().trim();
 
-          {showMessages && (
-            <div className="transition-all duration-500">
-              <p className="text-gray-300 text-lg animate-pulse">
-                {analysisMessages[currentMessage]}
-              </p>
-            </div>
-          )}
+              setRole(roleLower);
 
-        </div>
-      </div>
-    );
+              const user = JSON.parse(localStorage.getItem("qyrovaUser")) || {};
+              user.role = roleLower;
+              localStorage.setItem("qyrovaUser", JSON.stringify(user));
+
+              setDirection(1);
+              setStage("onboarding");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "level":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <LevelPage
+            onSelect={(l) => {
+              const levelLower = l.toLowerCase().trim();
+
+              setLevel(levelLower);
+              localStorage.setItem("level", levelLower);
+
+              setDirection(1);
+              setStage("interview");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "interview":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <InterviewPage
+            role={role}
+            level={level}
+            branch={branch}
+            onComplete={(data) => {
+              setScore(data?.score || 0);
+              setAnswers(data?.sections || []);
+              setCoachRemark(data?.coachRemark || "");
+              setDirection(1);
+              setStage("report");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "report":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <PerformanceReport
+            score={score}
+            sections={answers}
+            coachRemark={coachRemark}
+            onRetry={() => {
+              setDirection(1);
+              setStage("interview");
+            }}
+            onProceed={() => {
+              setDirection(1);
+              setStage("finalIntro");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "finalIntro":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <FinalIntro
+            onStart={() => {
+              setDirection(1);
+              setStage("final");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "final":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <FinalInterview
+            role={role}
+            onComplete={(ans) => {
+              setAnswers(ans);
+              setDirection(1);
+              setStage("finalReport");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "finalReport":
+      content = (
+        <>
+          <BackButton onClick={goBack} />
+          <FinalPerformanceReport
+            answers={answers}
+            onGetTips={() => {
+              setDirection(1);
+              setStage("finalTips");
+            }}
+          />
+        </>
+      );
+      break;
+
+    case "finalTips":
+      content = (
+        <FinalTipsPage
+          answers={answers}
+          onDone={() => {
+            setDirection(1);
+            setStage("start");
+          }}
+        />
+      );
+      break;
+
+    case "reportExport":
+      content = <ReportExport />;
+      break;
+
+    default:
+      content = null;
   }
 
   return (
-    <div
-      ref={pageRef}
-      className="relative min-h-screen flex items-center justify-center px-6 text-white"
-      style={{
-        fontFamily: "Rajdhani, sans-serif",
-      }}
-    >
+    <div style={{ minHeight: "100vh", position: "relative" }}>
+      {stage !== "reportExport" && (
+        <ProfileMenu
+          onLogout={() => {
+            const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-      <img
-        src="/performancereportpages.png"
-        alt="bg"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+            if (isLoggedIn) {
+              localStorage.clear();
+              setStage("start");
+            } else {
+              setShowAuth(true);
+            }
+          }}
+          onEdit={() => {
+            setLevel("");
+            localStorage.removeItem("level");
+            setStage("degree");
+          }}
+        />
+      )}
 
-      <div className="relative z-10 w-full flex justify-center">
+      {["degree", "branch", "role"].includes(stage) ? (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={stage}
+            initial={{ opacity: 0, x: direction === 1 ? 80 : -80 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction === 1 ? -80 : 80 }}
+            transition={{ duration: 0.35 }}
+          >
+            {content}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        content
+      )}
 
-        <div className="w-full max-w-5xl bg-black/70 backdrop-blur-xl p-10 rounded-3xl border border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
-
-          <h1 className="text-3xl font-bold text-center mb-10">
-            🧠 Your Personalized Improvement Plan
-          </h1>
-
-          <div className="grid md:grid-cols-2 gap-8">
-
-            <div className="p-5 rounded-xl border border-green-500/30 bg-black/40">
-              <h2 className="text-green-400 text-xl mb-3">
-                💪 Strengths
-              </h2>
-
-              <ul className="list-disc pl-5 space-y-3 text-gray-300">
-                {tips.strengths.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-5 rounded-xl border border-red-500/30 bg-black/40">
-              <h2 className="text-red-400 text-xl mb-3">
-                ⚠️ Weak Areas
-              </h2>
-
-              <ul className="list-disc pl-5 space-y-3 text-gray-300">
-                {tips.weaknesses.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-5 rounded-xl border border-blue-500/30 bg-black/40">
-              <h2 className="text-blue-400 text-xl mb-3">
-                🎯 How to Improve
-              </h2>
-
-              <ul className="list-disc pl-5 space-y-3 text-gray-300">
-                {tips.improvements.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-5 rounded-xl border border-purple-500/30 bg-black/40">
-              <h2 className="text-purple-400 text-xl mb-3">
-                📚 Recommended Resources
-              </h2>
-
-              <ul className="list-disc pl-5 space-y-3 text-gray-300">
-                {tips.resources.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-          </div>
-
-          <div className="download-buttons flex flex-col items-center gap-5 mt-10">
-
-            <button
-              onClick={downloadPlan}
-              className="px-6 py-3 border border-purple-500 rounded-lg 
-              hover:shadow-[0_0_20px_rgba(168,85,247,0.7)] transition-all"
-            >
-              📄 Download Improvement Plan
-            </button>
-
-            <button
-              onClick={onDone}
-              className="px-6 py-3 border border-pink-500 rounded-lg 
-              hover:shadow-[0_0_20px_rgba(236,72,153,0.8)] transition-all"
-            >
-              🏠 Back to Home
-            </button>
-
-          </div>
-
-        </div>
-      </div>
+      {showAuth && (
+        <AuthModal
+          type="login"
+          onClose={() => setShowAuth(false)}
+        />
+      )}
     </div>
   );
 }
