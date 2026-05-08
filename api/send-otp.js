@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import clientPromise from "./db";
+import clientPromise from "../db";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
