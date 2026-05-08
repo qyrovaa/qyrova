@@ -316,8 +316,13 @@ export default function FinalTipsPage({ answers, onDone }) {
 
             <button
               type="button"
-              onClick={() => {
-                onDone();
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (typeof onDone === "function") {
+                  onDone();
+                }
               }}
               className="relative z-[9999] pointer-events-auto px-6 py-3 border border-pink-500 rounded-lg 
               hover:shadow-[0_0_20px_rgba(236,72,153,0.8)] transition-all"
