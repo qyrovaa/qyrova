@@ -42,9 +42,16 @@ export default async function handler(req, res) {
 
     const result = await resend.emails.send({
       from: "onboarding@resend.dev",
-      to: "qyrovaa@gmail.com",
-      subject: "Qyrova OTP Test",
-      html: `<h1>${otp}</h1>`,
+      to: normalizedEmail,
+      subject: "Your Qyrova OTP",
+      html: `
+        <div style="font-family: Arial; text-align:center; padding:20px;">
+          <h2>Qyrova Verification Code</h2>
+          <p>Your OTP is:</p>
+          <h1>${otp}</h1>
+          <p>This OTP expires in 5 minutes.</p>
+        </div>
+      `,
     });
 
     return res.status(200).json({
