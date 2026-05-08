@@ -12,7 +12,6 @@ export default function ProfileMenu({ onLogout, onEdit }) {
 
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-  // ✅ FIXED (ONLY THIS PART)
   const user = isLoggedIn
     ? JSON.parse(localStorage.getItem("qyrovaUser")) || {}
     : {};
@@ -40,14 +39,50 @@ export default function ProfileMenu({ onLogout, onEdit }) {
     }
   };
 
+  const formatDegree = (degree) => {
+    if (!degree) return "";
+
+    const map = {
+      btech: "B.Tech",
+      mtech: "M.Tech",
+      bca: "BCA",
+      mca: "MCA",
+      bsc: "B.Sc",
+      msc: "M.Sc",
+      mba: "MBA",
+    };
+
+    return map[degree.toLowerCase()] || degree;
+  };
+
+  const formatBranch = (branch) => {
+    if (!branch) return "";
+
+    const map = {
+      cse: "Computer Science Engineering",
+      ece: "Electronics & Communication Engineering",
+      ee: "Electrical Engineering",
+      ce: "Civil Engineering",
+      me: "Mechanical Engineering",
+      it: "Information Technology",
+      ai: "Artificial Intelligence",
+      aiml: "Artificial Intelligence & Machine Learning",
+    };
+
+    return map[branch.toLowerCase()] || branch;
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         triggerClose();
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -86,11 +121,14 @@ export default function ProfileMenu({ onLogout, onEdit }) {
     }
 
     document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+
+    return () =>
+      document.removeEventListener("keydown", handleKey);
   }, [open, activeIndex, isLoggedIn]);
 
   const triggerClose = () => {
     setClosing(true);
+
     setTimeout(() => {
       setOpen(false);
       setClosing(false);
@@ -102,7 +140,6 @@ export default function ProfileMenu({ onLogout, onEdit }) {
       ref={menuRef}
       className="absolute top-6 right-6 z-50 font-[Inter]"
     >
-
       <div
         onClick={() => setOpen(!open)}
         className="w-16 h-16 rounded-full cursor-pointer border border-white/70 hover:scale-105 transition overflow-hidden shadow-[0_0_18px_rgba(255,255,255,0.12)]"
@@ -128,10 +165,9 @@ export default function ProfileMenu({ onLogout, onEdit }) {
           ${closing ? "animate-close" : "animate-open"}
         `}
         >
-
           <div className="flex items-center gap-3 mb-4">
             <div
-              className="relative w-14 h-14 rounded-full cursor-pointer"
+              className="relative w-14 h-14 rounded-full cursor-pointer group"
               onClick={() => fileInputRef.current.click()}
             >
               {avatar ? (
@@ -145,6 +181,10 @@ export default function ProfileMenu({ onLogout, onEdit }) {
                 </div>
               )}
 
+              <div className="absolute inset-0 rounded-full bg-black/55 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                <span className="text-white text-lg">📷</span>
+              </div>
+
               <input
                 type="file"
                 ref={fileInputRef}
@@ -156,7 +196,8 @@ export default function ProfileMenu({ onLogout, onEdit }) {
             <div>
               <p className="text-sm font-semibold text-white">{name}</p>
               <p className="text-xs text-gray-400">
-                {user.degree} {user.branch && `• ${user.branch}`}
+                {formatDegree(user.degree)}
+                {user.branch && ` • ${formatBranch(user.branch)}`}
               </p>
             </div>
           </div>
@@ -164,7 +205,6 @@ export default function ProfileMenu({ onLogout, onEdit }) {
           <div className="h-px bg-white/5 mb-3" />
 
           <div className="space-y-1">
-
             {isLoggedIn ? (
               <>
                 <button
@@ -198,7 +238,6 @@ export default function ProfileMenu({ onLogout, onEdit }) {
                 Login
               </button>
             )}
-
           </div>
         </div>
       )}
