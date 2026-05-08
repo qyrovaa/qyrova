@@ -72,7 +72,7 @@ Return STRICT JSON ONLY:
 `;
 
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

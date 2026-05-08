@@ -310,7 +310,7 @@ ${answer}
 `;
 
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-4o-mini",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are a realistic interviewer." },
         { role: "user", content: prompt },
