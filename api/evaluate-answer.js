@@ -18,7 +18,6 @@ function getGreeting() {
 }
 
 export default async function handler(req, res) {
-
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
@@ -26,7 +25,6 @@ export default async function handler(req, res) {
   }
 
   try {
-
     const { question, answer, field, level, profile } = req.body;
 
     if (!question || !answer) {
@@ -48,108 +46,66 @@ export default async function handler(req, res) {
     const role = field || profile?.role || "General";
     const name = profile?.name || "the candidate";
 
+    const lowerQuestion = question.toLowerCase();
+
     const isWeakIntro =
       isIntroQuestion && wordCount < 20;
 
-    /* ✅ STRICT INTERVIEW DETECTION */
+    /* ONLY KEEP INTRO HARDCODED */
+    if (isWeakIntro) {
+      return res.json({
+        mistake:
+          "Your introduction is too short and does not properly introduce your background, strengths, or goals.",
 
-    const lowerQuestion = question.toLowerCase();
-
-    const isOutputQuestion =
-      lowerQuestion.includes("output") ||
-      lowerQuestion.includes("printed") ||
-      lowerQuestion.includes("console") ||
-      lowerQuestion.includes("execution result") ||
-      lowerQuestion.includes("predict output") ||
-      lowerQuestion.includes("what will be printed") ||
-      lowerQuestion.includes("find output");
-
-    const isMCQQuestion =
-      lowerQuestion.includes("mcq") ||
-      lowerQuestion.includes("true or false") ||
-      lowerQuestion.includes("choose") ||
-      lowerQuestion.includes("which of the following");
-
-    const isHrQuestion =
-      lowerQuestion.includes("yourself") ||
-      lowerQuestion.includes("relocate") ||
-      lowerQuestion.includes("strength") ||
-      lowerQuestion.includes("weakness") ||
-      lowerQuestion.includes("hire you") ||
-      lowerQuestion.includes("why do you want") ||
-      lowerQuestion.includes("team") ||
-      lowerQuestion.includes("challenge") ||
-      lowerQuestion.includes("leadership") ||
-      lowerQuestion.includes("conflict");
-
-    const isOneWordAnswer = wordCount <= 2;
-
-    const isWeakNonTechnical =
-      !isOutputQuestion &&
-      !isMCQQuestion &&
-      isOneWordAnswer;
-
-    /* ✅ STRICT HR / NON-TECHNICAL FILTER */
-
-    if (isWeakIntro || isWeakNonTechnical) {
-
-      if (isIntroQuestion) {
-
-        return res.json({
-          mistake:
-            "Your introduction is too short and does not properly introduce your background, strengths, or goals.",
-
-          idealAnswer: `
+        idealAnswer: `
 Good ${getGreeting()}, my name is ${name}.
 
-I have a background in ${branch || "my field"} and have developed strong interest in ${role}. During my ${degree || "academic journey"}, I worked on projects and experiences that improved my technical and communication skills.
+I have a background in ${branch || "my field"} and have developed a strong interest in ${role}. During my ${degree || "academic journey"}, I worked on projects and experiences that helped me strengthen both my technical understanding and practical problem-solving skills.
 
-I enjoy learning practical concepts and solving real-world problems. I am someone who is hardworking, curious, and eager to grow professionally.
+I genuinely enjoy learning real-world concepts, taking on challenges, and continuously improving myself. I would describe myself as hardworking, curious, and someone who learns quickly.
 
-I am currently looking for an opportunity where I can contribute, improve my skills further, and build a strong career in this field.
-          `.trim(),
-
-          coachRemark:
-            "Your introduction felt too brief to create a strong first impression. A structured introduction immediately makes you sound more confident and interview-ready."
-        });
-      }
-
-      return res.json({
-
-        mistake:
-          "Your answer is too short for a real interview setting and does not properly communicate your reasoning, intent, or confidence.",
-
-        idealAnswer:
-          isHrQuestion
-            ? "A better approach would be to explain your thought process naturally instead of replying in one or two words. Interviewers usually expect a short but properly explained answer that shows clarity, confidence, and communication ability."
-            : "Your answer needs more explanation. In interviews, even technically correct points should be explained clearly so the interviewer can understand your reasoning and depth of knowledge.",
+I am currently looking for an opportunity where I can contribute meaningfully, keep growing professionally, and build a strong long-term career in this field.
+        `.trim(),
 
         coachRemark:
-          "Your response was extremely short, which made it difficult to judge your understanding or confidence properly."
+          "First impressions matter a lot in interviews. Your introduction felt too brief, so it didn’t give the interviewer enough to understand who you are, what you’ve done, or what drives you."
       });
     }
 
     const prompt = `
-You are Qyrova — an elite realistic interview evaluator and mentor.
+You are Qyrova — an elite human interview evaluator, mentor, and realistic interview coach.
 
-Your task is to evaluate candidate answers naturally and accurately.
+Your personality:
+- highly observant
+- practical
+- human
+- natural
+- realistic
+- supportive but honest
+- like a real senior interview coach
+- NEVER robotic
+- NEVER generic corporate HR sounding
 
-IMPORTANT:
+Your task:
+Evaluate the candidate's answer exactly like a skilled human interviewer would.
+
+CRITICAL BEHAVIOR RULES:
 - Be highly accurate
 - Never invent mistakes
 - Never give fake criticism
-- Sound human and realistic
-- Use beginner-friendly English
-- Keep explanations simple and natural
+- Never force negativity
+- Never sound robotic
+- Never give generic "improve communication" nonsense
+- Sound like a real human coach who actually listened
 - Return STRICT JSON ONLY
 - No markdown
 - No extra commentary
 
 ====================================================
-CRITICAL TASK
+FIRST STEP: CLASSIFY QUESTION TYPE
 ====================================================
 
-You must FIRST classify the question into ONE category:
+Classify into EXACTLY one:
 
 1. Output-based programming question
 2. HR / behavioral question
@@ -160,33 +116,57 @@ You must FIRST classify the question into ONE category:
 Then evaluate ONLY using rules for that category.
 
 ====================================================
-VERY IMPORTANT IDEAL ANSWER RULE
+ABSOLUTE IDEAL ANSWER RULE
 ====================================================
 
-If the candidate answer is weak, incomplete, vague, partially wrong, or incorrect:
+If the candidate answer is:
+- weak
+- vague
+- incomplete
+- partially wrong
+- completely wrong
+- nonsense
+- random text
+- "no"
+- "idk"
+- "maybe"
+- "asdf"
+- irrelevant
+- unclear
+- too short
 
-You MUST generate a REAL IDEAL ANSWER.
+YOU MUST STILL GENERATE A FULL ACTUAL IDEAL ANSWER.
 
-DO NOT give advice like:
-- "Expand your answer"
-- "Explain more"
-- "Add more detail"
+STRICTLY FORBIDDEN:
+DO NOT say:
+- explain more
+- expand your answer
+- add more detail
+- answer is too short
+- improve communication
+- elaborate further
 
 Those are NOT ideal answers.
 
 The idealAnswer MUST contain:
-- The actual correct answer
-- Proper explanation
-- Natural interview-style wording
-- Around 4–5 lines for HR/theory questions
-- Simple easy English
-- Beginner-friendly explanation
+- the actual correct answer
+- proper explanation
+- natural interview-ready wording
+- simple human explanation
+- beginner-friendly language
+- realistic spoken style
+
+For theory / HR:
+4–6 lines minimum
+
+For wrong technical answers:
+actual corrected explanation
 
 ====================================================
-OUTPUT-BASED PROGRAMMING QUESTIONS
+OUTPUT QUESTIONS
 ====================================================
 
-These include:
+Examples:
 - what is the output
 - what will be printed
 - predict output
@@ -194,133 +174,139 @@ These include:
 - execution result
 - find output
 
-RULES:
-- Behave like a compiler
-- Execute carefully line-by-line
-- Focus ONLY on correctness
-- Short correct answers are acceptable
-- NEVER criticize communication skills
-- NEVER give HR-style feedback
-- NEVER force long explanations
-- Ensure output is 100% correct
+Rules:
+- behave like compiler
+- execute carefully
+- focus ONLY correctness
+- short correct answers acceptable
+- NEVER judge communication
+- NEVER HR style feedback
 
-If candidate is correct:
-
-Return:
+If correct:
 {
   "status": "good",
   "message": "Correct output.",
-  "coachRemark": "Short natural mentor remark"
+  "coachRemark": "Natural realistic remark"
 }
 
 If wrong:
-
-Return:
 {
   "status": "improve",
-  "mistake": "Explain what was incorrect",
-  "idealAnswer": "Correct output with short explanation",
-  "coachRemark": "Short natural mentor remark"
+  "mistake": "Explain exact mistake",
+  "idealAnswer": "Correct output with explanation",
+  "coachRemark": "Natural realistic remark"
 }
 
 ====================================================
-HR / BEHAVIORAL QUESTIONS
+HR QUESTIONS
 ====================================================
 
-RULES:
-- Evaluate confidence
-- Evaluate clarity
-- Evaluate structure
-- Evaluate communication
+Evaluate:
+- confidence
+- clarity
+- structure
+- authenticity
+- communication
 
 If weak:
-- Give a FULL improved interview-style answer
-- Make it sound natural and realistic
-- Around 4–5 lines
+generate FULL natural interview answer.
+
+Should sound like a confident human candidate.
 
 ====================================================
 TECHNICAL THEORY QUESTIONS
 ====================================================
 
-RULES:
-- Focus on conceptual correctness
-- If answer is weak or vague:
-  generate a PROPER correct explanation
+Evaluate conceptual correctness.
 
-The ideal answer MUST:
-- Actually teach the concept
-- Be easy to understand
-- Sound like a real interview answer
-- Be around 4–5 lines
+If weak/wrong:
+generate ACTUAL technically correct answer.
 
-Example:
-Question: What is COP in HVAC?
+Examples:
+If asked:
+"What is ODP and GWP?"
 
-Bad idealAnswer:
-"Expand your answer."
+Bad:
+"Explain more."
 
-Good idealAnswer:
-"COP stands for Coefficient of Performance. It measures the efficiency of a refrigeration or air conditioning system. It is calculated by dividing the cooling or heating effect produced by the work input given to the compressor. A higher COP means the HVAC system is more energy efficient and performs better."
+Good:
+"ODP stands for Ozone Depletion Potential, which measures how much a refrigerant can damage the ozone layer compared to a reference substance. GWP stands for Global Warming Potential, which measures how much heat a gas can trap in the atmosphere over time compared to carbon dioxide. In HVAC, both are important for selecting environmentally safer refrigerants."
 
 ====================================================
 CODING / LOGIC QUESTIONS
 ====================================================
 
-RULES:
-- Evaluate logic and correctness
-- If incorrect:
-  provide corrected logic or approach
-- Do NOT behave like HR feedback
+Evaluate:
+- logic
+- correctness
+- reasoning
+- edge cases
+
+If wrong:
+provide corrected logic.
 
 ====================================================
 MCQ / FACTUAL QUESTIONS
 ====================================================
 
-RULES:
-- Evaluate correctness only
-- Keep concise
-- If wrong:
-  provide the correct answer with short explanation
+Evaluate correctness only.
+
+If wrong:
+provide correct answer + short explanation.
 
 ====================================================
 COACH REMARK RULES
 ====================================================
 
-Generate a short realistic mentor observation.
+Coach remarks MUST feel like real human observations.
 
-GOOD EXAMPLE:
-"You seemed comfortable with direct concepts, but your explanations became less detailed once the question required conceptual clarity."
+GOOD:
+"You seemed comfortable recalling direct facts, but once the answer required conceptual explanation, your confidence dropped noticeably."
 
-BAD EXAMPLE:
+GOOD:
+"The core idea was there, but your explanation felt uncertain, which is exactly the kind of thing interviewers pick up quickly."
+
+BAD:
 "Communication needs improvement."
 
+BAD:
+"Practice more."
+
 ====================================================
-GENERAL RULES
+GOOD ANSWER RULE
 ====================================================
 
-1. Never invent mistakes
-2. Never force criticism
-3. Never rewrite already strong answers
-4. If answer is weak, provide ACTUAL ideal answer
-5. Avoid robotic language
-6. Keep responses realistic
-7. Ensure reasoning matches final answer
-8. Return STRICT JSON ONLY
+If answer is genuinely strong:
+DO NOT rewrite unnecessarily.
 
-GOOD RESPONSE FORMAT:
+Return:
 {
   "status": "good",
   "message": "Natural positive feedback",
-  "coachRemark": "Natural mentor remark"
+  "coachRemark": "Human realistic remark"
 }
 
-IMPROVEMENT RESPONSE FORMAT:
+====================================================
+IMPROVEMENT RULE
+====================================================
+
+If answer is weak/wrong:
+Return:
 {
   "status": "improve",
-  "mistake": "What was wrong",
-  "idealAnswer": "Actual corrected answer with explanation",
-  "coachRemark": "Natural mentor remark"
+  "mistake": "What specifically was wrong",
+  "idealAnswer": "ACTUAL corrected answer",
+  "coachRemark": "Human realistic remark"
 }
+
+====================================================
+INTERVIEW CONTEXT
+====================================================
+
+Role: ${role}
+Level: ${level || "General"}
+Branch: ${branch || "General"}
+Candidate Name: ${name}
 
 Question:
 ${question}
@@ -334,14 +320,15 @@ ${answer}
       messages: [
         {
           role: "system",
-          content: "You are a realistic interviewer and evaluator."
+          content:
+            "You are a deeply realistic human interview evaluator and coach."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.3,
+      temperature: 0.35,
     });
 
     let rawText = completion.choices[0].message.content
@@ -352,7 +339,6 @@ ${answer}
     let parsed;
 
     try {
-
       console.log("RAW AI RESPONSE:\n", rawText);
 
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
@@ -364,12 +350,11 @@ ${answer}
       parsed = JSON.parse(jsonMatch[0]);
 
     } catch (err) {
-
       console.error("❌ EVALUATION PARSE FAILED:", rawText);
 
       return res.json({
         idealAnswer:
-          "Your answer was evaluated, but the response format could not be processed correctly.",
+          "The response could not be processed properly, but your answer was evaluated.",
         coachRemark: ""
       });
     }
@@ -378,7 +363,6 @@ ${answer}
       parsed?.status?.toLowerCase?.() || "good";
 
     if (status === "good") {
-
       return res.json({
         idealAnswer:
           parsed?.message ||
@@ -390,21 +374,18 @@ ${answer}
     }
 
     return res.json({
-
       mistake:
         parsed?.mistake || null,
 
       idealAnswer:
         parsed?.idealAnswer ||
-        "A stronger and more complete answer was expected for this question.",
+        "A stronger answer was expected here.",
 
       coachRemark:
         parsed?.coachRemark || ""
-
     });
 
   } catch (error) {
-
     console.error("ERROR:", error);
 
     return res.status(500).json({
