@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 export default function FinalTipsPage({ answers }) {
   const [tips, setTips] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   /* ✅ PREMIUM COACHING LOADER */
   const analysisMessages = [
@@ -217,10 +220,8 @@ export default function FinalTipsPage({ answers }) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden relative text-white">
 
-        {/* Glow */}
         <div className="absolute w-[700px] h-[700px] bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
 
-        {/* Grid */}
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -232,24 +233,20 @@ export default function FinalTipsPage({ answers }) {
 
         <div className="relative z-10 text-center px-6 max-w-2xl">
 
-          {/* Label */}
           <p className="text-purple-400 tracking-[0.5em] text-xs md:text-sm mb-8 animate-pulse">
             QYROVA: BE THE OBVIOUS CHOICE
           </p>
 
-          {/* Title */}
           <h1 className="text-4xl md:text-5xl font-semibold leading-tight mb-8">
             Preparing Your Personalized Interview Roadmap
           </h1>
 
-          {/* Dots */}
           <div className="flex justify-center gap-3 mb-10">
             <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce"></div>
             <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce delay-150"></div>
             <div className="w-3 h-3 rounded-full bg-purple-400 animate-bounce delay-300"></div>
           </div>
 
-          {/* Rotating Messages */}
           {showMessages && (
             <div className="transition-all duration-500">
               <p className="text-gray-300 text-lg animate-pulse">
@@ -272,14 +269,12 @@ export default function FinalTipsPage({ answers }) {
       }}
     >
 
-      {/* Background */}
       <img
         src="/performancereportpages.png"
         alt="bg"
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
 
-      {/* Content */}
       <div className="relative z-10 w-full flex justify-center">
 
         <div className="w-full max-w-5xl bg-black/70 backdrop-blur-xl p-10 rounded-3xl border border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.2)]">
@@ -350,7 +345,14 @@ export default function FinalTipsPage({ answers }) {
               📄 Download Improvement Plan
             </button>
 
-           
+            <button
+              onClick={() => navigate("/")}
+              className="px-6 py-3 border border-pink-500 rounded-lg 
+              hover:shadow-[0_0_20px_rgba(236,72,153,0.8)] transition-all"
+            >
+              🏠 Back to Home
+            </button>
+
           </div>
 
         </div>
