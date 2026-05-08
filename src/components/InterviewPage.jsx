@@ -138,7 +138,7 @@ export default function InterviewPage({ role, level, onComplete }) {
 
     try {
 
-      const res = await fetch("http://localhost:5000/evaluate-answer", {
+      const res = await fetch("/api/evaluate-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +180,7 @@ export default function InterviewPage({ role, level, onComplete }) {
 
     try {
 
-      const scoreRes = await fetch("http://localhost:5000/score-answer", {
+      const scoreRes = await fetch("/api/score-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -261,7 +261,7 @@ export default function InterviewPage({ role, level, onComplete }) {
 
         try {
 
-          const coachRes = await fetch("http://localhost:5000/generate-final-remark", {
+          const coachRes = await fetch("/api/generate-final-remark", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
