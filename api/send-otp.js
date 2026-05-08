@@ -1,5 +1,7 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import clientPromise from "../db";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -36,18 +38,8 @@ export default async function handler(req, res) {
       { upsert: true }
     );
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `Qyrova <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "Qyrova <onboarding@resend.dev>",
       to: normalizedEmail,
       subject: "Your Qyrova OTP Code",
       html: `
