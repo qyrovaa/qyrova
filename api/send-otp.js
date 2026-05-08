@@ -5,7 +5,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+    return res.status(405).json({
+      success: false,
+      message: "Method not allowed",
+    });
   }
 
   try {
@@ -50,11 +53,17 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("FULL RESEND ERROR:", error);
+    console.error("RESEND KEY EXISTS:", !!process.env.RESEND_API_KEY);
 
     return res.status(500).json({
       success: false,
       message: error.message,
+      fullError: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      },
     });
   }
 }
